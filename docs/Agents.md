@@ -36,9 +36,11 @@ src/
 
 ## localStorage Rules
 Use these exact key names for consistency:
+- `focusflow_username` — user's display name (string)
 - `focusflow_tasks` — array of task objects
 - `focusflow_streak` — object with count and last active date
 - `focusflow_session` — current timer session state
+- `focusflow_xp` — total XP earned (number)
 
 ## What the AI Should NOT Do
 - Do not install unnecessary packages — keep dependencies minimal

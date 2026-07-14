@@ -3,6 +3,7 @@ import { loadFromStorage, saveToStorage } from '../utils/storage'
 
 const SESSION_KEY = 'focusflow_session'
 const DEFAULT_DURATION_SECONDS = 25 * 60
+const TICK_INTERVAL_MS = 200
 
 function loadInitialState() {
   const saved = loadFromStorage(SESSION_KEY)
@@ -12,6 +13,7 @@ function loadInitialState() {
       remainingSeconds: DEFAULT_DURATION_SECONDS,
       status: 'idle',
       endTime: null,
+      completedWhileClosed: false,
     }
   }
 
@@ -35,6 +37,7 @@ function loadInitialState() {
 
   let remainingSeconds = durationSeconds
   let endTime = null
+  let completedWhileClosed = false
 
   // 3. Resolve status, remainingSeconds, and endTime based on status type
   if (status === 'running') {
@@ -45,6 +48,7 @@ function loadInitialState() {
         status = 'complete'
         remainingSeconds = 0
         endTime = null
+        completedWhileClosed = true
       } else {
         status = 'running'
         remainingSeconds = Math.min(remaining, durationSeconds)
@@ -100,7 +104,7 @@ function loadInitialState() {
     })
   }
 
-  return { durationSeconds, remainingSeconds, status, endTime }
+  return { durationSeconds, remainingSeconds, status, endTime, completedWhileClosed }
 }
 
 export function formatTime(totalSeconds) {
@@ -121,6 +125,12 @@ export function useTimer({ onComplete } = {}) {
   const intervalRef = useRef(null)
   const onCompleteRef = useRef(onComplete)
   onCompleteRef.current = onComplete
+
+  useEffect(() => {
+    if (initial.completedWhileClosed) {
+      onCompleteRef.current?.()
+    }
+  }, [initial])
 
   const clearTick = useCallback(() => {
     if (intervalRef.current) {
@@ -155,7 +165,7 @@ export function useTimer({ onComplete } = {}) {
       return undefined
     }
 
-    intervalRef.current = setInterval(tick, 200)
+    intervalRef.current = setInterval(tick, TICK_INTERVAL_MS)
     return clearTick
   }, [status, tick, clearTick])
 

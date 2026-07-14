@@ -16,10 +16,43 @@ const yesterdayKey = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function loadInitialStreak() {
+  const saved = loadFromStorage(STREAK_KEY)
+  const fallback = { count: 0, lastActiveDate: null }
+  if (!saved || typeof saved !== 'object') {
+    return fallback
+  }
+
+  // Validate count
+  let count = Number(saved.count)
+  if (!Number.isFinite(count) || count < 0) {
+    count = 0
+  }
+
+  // Validate lastActiveDate (should be YYYY-MM-DD string or null)
+  let lastActiveDate = saved.lastActiveDate
+  if (lastActiveDate !== null) {
+    if (typeof lastActiveDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(lastActiveDate)) {
+      lastActiveDate = null
+    }
+  }
+
+  // Consistent state enforcement
+  if (count === 0 || lastActiveDate === null) {
+    count = 0
+    lastActiveDate = null
+  }
+
+  // Save back if it resolved differently to ensure data integrity
+  if (count !== saved.count || lastActiveDate !== saved.lastActiveDate) {
+    saveToStorage(STREAK_KEY, { count, lastActiveDate })
+  }
+
+  return { count, lastActiveDate }
+}
+
 export function useStreak() {
-  const [streak, setStreak] = useState(() =>
-    loadFromStorage(STREAK_KEY, { count: 0, lastActiveDate: null }),
-  )
+  const [streak, setStreak] = useState(() => loadInitialStreak())
 
   /** Call when a timer session completes naturally. */
   const recordSession = useCallback(() => {
