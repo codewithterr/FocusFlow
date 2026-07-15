@@ -8,6 +8,7 @@ import { useTimer } from './hooks/useTimer'
 import { useTasks } from './hooks/useTasks'
 import { useStreak } from './hooks/useStreak'
 import { loadFromStorage, saveToStorage } from './utils/storage'
+import { playDing } from './utils/audio'
 
 const USERNAME_KEY = 'focusflow_username'
 const XP_KEY = 'focusflow_xp'
@@ -15,32 +16,30 @@ const XP_PER_SESSION = 10
 const XP_PER_LEVEL = 100
 const TOAST_DURATION_MS = 3000
 
+/** Returns a trimmed username from storage, or null if missing/invalid. */
+const loadUsername = () => {
+  const saved = loadFromStorage(USERNAME_KEY)
+  if (typeof saved !== 'string') return null
+  const trimmed = saved.trim()
+  return trimmed || null
+}
+
 /** Level = floor(totalXP / XP_PER_LEVEL) + 1 */
 const calcLevel = (xp) => Math.floor(xp / XP_PER_LEVEL) + 1
 
-/** Creates a short ding sound using the Web Audio API. */
-const playDing = () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.5)
-    osc.onended = () => ctx.close()
-  } catch {
-    // Audio not available — silent fallback
+/** Validates and returns the loaded XP value, fallback to 0. */
+const loadInitialXp = () => {
+  const saved = loadFromStorage(XP_KEY, 0)
+  const parsed = Number(saved)
+  if (Number.isFinite(parsed) && parsed >= 0) {
+    return parsed
   }
+  return 0
 }
 
 function App() {
-  const [username, setUsername] = useState(() => loadFromStorage(USERNAME_KEY))
-  const [xp, setXp] = useState(() => loadFromStorage(XP_KEY, 0))
+  const [username, setUsername] = useState(loadUsername)
+  const [xp, setXp] = useState(() => loadInitialXp())
   const [toast, setToast] = useState(null)
   const toastTimeoutRef = useRef(null)
 
@@ -67,7 +66,7 @@ function App() {
 
     recordSession()
 
-    setToast(`You earned +${XP_PER_SESSION} XP!`)
+    setToast(`🎉 Awesome! You earned +${XP_PER_SESSION} XP`)
     clearTimeout(toastTimeoutRef.current)
     toastTimeoutRef.current = setTimeout(() => setToast(null), TOAST_DURATION_MS)
   }, [recordSession])
@@ -85,12 +84,14 @@ function App() {
     <div className="min-h-screen bg-bg text-text-primary">
       <div className="mx-auto max-w-[480px] px-6 py-8 flex flex-col items-center gap-8">
         {/* Header */}
-        <header className="w-full flex items-center justify-between">
-          <div>
+        <header className="w-full flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h1 className="text-lg font-bold text-primary">FocusFlow</h1>
-            <p className="text-sm text-text-muted">Let's focus, {username}.</p>
+            <p className="text-sm text-text-muted truncate">Let's focus, {username}.</p>
           </div>
-          <StreakTracker streak={streak} />
+          <div className="flex-shrink-0">
+            <StreakTracker streak={streak} />
+          </div>
         </header>
 
         {/* XP Bar */}
@@ -103,8 +104,8 @@ function App() {
             </div>
             <div className="h-1.5 rounded-full bg-bg overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent transition-all duration-200 w-[var(--progress)]"
-                style={{ '--progress': `${xp % XP_PER_LEVEL}%` }}
+                className="h-full rounded-full bg-accent transition-all duration-200"
+                style={{ width: `${xp % XP_PER_LEVEL}%` }}
               />
             </div>
           </div>

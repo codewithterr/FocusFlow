@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { loadFromStorage, saveToStorage } from '../utils/storage'
+import { unlockAudio } from '../utils/audio'
 
 const SESSION_KEY = 'focusflow_session'
 const DEFAULT_DURATION_SECONDS = 25 * 60
@@ -170,6 +171,7 @@ export function useTimer({ onComplete } = {}) {
   }, [status, tick, clearTick])
 
   const start = useCallback(() => {
+    unlockAudio()
     if (status === 'running' || status === 'complete' || endTimeRef.current) return
 
     const remaining = status === 'idle' ? durationSeconds : remainingSeconds
@@ -188,6 +190,7 @@ export function useTimer({ onComplete } = {}) {
   }, [status, durationSeconds, remainingSeconds])
 
   const pause = useCallback(() => {
+    unlockAudio()
     if (status !== 'running' || !endTimeRef.current) return
 
     const remaining = Math.min(durationSeconds, Math.max(0, (endTimeRef.current - Date.now()) / 1000))
@@ -203,6 +206,7 @@ export function useTimer({ onComplete } = {}) {
   }, [status, durationSeconds])
 
   const reset = useCallback(() => {
+    unlockAudio()
     clearTick()
     endTimeRef.current = null
     setRemainingSeconds(durationSeconds)

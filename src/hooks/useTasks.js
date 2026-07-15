@@ -3,8 +3,29 @@ import { loadFromStorage, saveToStorage } from '../utils/storage'
 
 const TASKS_KEY = 'focusflow_tasks'
 
+function loadInitialTasks() {
+  const saved = loadFromStorage(TASKS_KEY)
+  if (!Array.isArray(saved)) {
+    return []
+  }
+  // Validate schema for each task
+  const validTasks = saved.filter(
+    (t) =>
+      t &&
+      typeof t === 'object' &&
+      typeof t.id === 'number' &&
+      typeof t.text === 'string' &&
+      typeof t.done === 'boolean',
+  )
+  
+  if (validTasks.length !== saved.length) {
+    saveToStorage(TASKS_KEY, validTasks)
+  }
+  return validTasks
+}
+
 export function useTasks() {
-  const [tasks, setTasks] = useState(() => loadFromStorage(TASKS_KEY, []))
+  const [tasks, setTasks] = useState(() => loadInitialTasks())
 
   const persist = (next) => {
     setTasks(next)

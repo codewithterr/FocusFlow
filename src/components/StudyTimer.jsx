@@ -10,10 +10,8 @@ function StudyTimer({
 }) {
   return (
     <section className="w-full flex flex-col items-center gap-6">
-      <p className="text-sm text-text-muted">Let's focus.</p>
-
       <div
-        className="font-mono text-[64px] sm:text-7xl font-bold text-text-primary tabular-nums leading-none"
+        className="font-mono text-5xl sm:text-7xl font-bold text-text-primary tabular-nums leading-none"
         aria-live="polite"
         aria-label={`${formattedTime} remaining`}
       >
@@ -46,7 +44,7 @@ function StudyTimer({
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
         {isRunning ? (
           <button
             type="button"

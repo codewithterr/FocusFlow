@@ -11,8 +11,8 @@ function Onboarding({ onComplete }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex items-center justify-center px-6">
-      <div className="w-full max-w-[480px] flex flex-col items-center gap-8">
+    <div className="min-h-screen bg-bg text-text-primary">
+      <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center gap-8 px-6 py-8">
         <h1 className="text-3xl font-bold text-primary text-center">
           Welcome to FocusFlow
         </h1>
